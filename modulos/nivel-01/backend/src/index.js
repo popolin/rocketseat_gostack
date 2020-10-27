@@ -1,5 +1,5 @@
 const { response } = require('express');
-const { uuid } = require('uuidv4')
+const { uuid, isUuid } = require('uuidv4')
 const express = require('express');
 
 const app = express();
@@ -7,6 +7,27 @@ const app = express();
 app.use(express.json());
 
 const projects = [];
+
+// Middleware: 
+// Interceptador de requisições que interrompe totalmente a requisição ou altera dados da requisição
+function logRequests(request, response, next){
+    const {method, url} = request;
+    const logLabel = `[${method.toUpperCase()}]${url}`;
+    console.time(logLabel);
+    next();
+    console.timeEnd(logLabel);
+}
+
+function validateProjectId(request, response, next){
+    const {id} = request.params;
+    if(!isUuid(id)){
+        return response.status(400).json({error: "Invalid project id"});
+    }
+    return next();
+}
+
+app.use(logRequests);
+app.use('/projects/:id', validateProjectId);
 
 app.get('/projects', (request, response) => {
     const {title} = request.query;
